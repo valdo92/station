@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-##Définition des variables
+# #Définition des variables
 
 #Variables liées à la partie mécanique
 M = 140000  # en kg, pour une rame
@@ -12,8 +12,8 @@ g = 9.81
 v_croisiere = 20 #vitesse de croisière en m/s
 acc = 0.8 # accélération en m/s^2
 d = 1500 # distance en m entre deux sous stations
-#alpha = [0 for i in range(400)] + [ma.atan(0.06) for i in range(200)] + [0 for i in range(200)] + [ma.atan(-0.06) for i in range(200)] + [0 for i in range(500)]
-alpha = [0 for i in range(d)]
+alpha = [0 for i in range(400)] + [ma.atan(0.06) for i in range(200)] + [0 for i in range(200)] + [ma.atan(-0.06) for i in range(200)] + [0 for i in range(500)]
+#alpha = [0 for i in range(d)]
 
 #Variables liées à la partie électrique
 V0 = 835  # en V
@@ -29,7 +29,7 @@ pas_dist = 1 # pas de distance, en m
 epsilon = 1e-6 # précision pour la dichotomie
 
 
-## Calcul de la vitesse, position et accélération en fonction du temps
+# # Calcul de la vitesse, position et accélération en fonction du temps
 # Hypothèse : profil de vitesse trapézoïdal, vitesse de croisière de 20 m/s. On accélère et on freine à +- 0.8 m/s^2.
 
 n = int(v_croisiere/acc) # nombre de pas où le train accélère/deccélère
@@ -107,7 +107,7 @@ print(P)
 #    P2.append(0)
 
 
-## Résolution numérique pour trouver Vcat, Is1 et Is2
+# # Résolution numérique pour trouver Vcat, Is1 et Is2
 
 #Dichotomie
 a = 0.1 # Attention il y a deux zéros dans la fonction recherchée (pour d1=500m). Ici c'est l'intervalle pour le premier zéro.
@@ -125,16 +125,16 @@ def dichotomie(f, a, b, epsilon):
         c+=1
     return m
 
-#On trouve Vcat = 1.4035875878762452 Volt
-#Vcat = 1.4036
-#Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
-#Is2 = (V0-Vcat) / (Rlin*d2 + Rs2)
-#On trouve Is1=7718 A et Is2=7186 A
+# On trouve Vcat = 1.4035875878762452 Volt
+# Vcat = 1.4036
+# Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
+# Is2 = (V0-Vcat) / (Rlin*d2 + Rs2)
+# On trouve Is1=7718 A et Is2=7186 A
 
 TensionCat = []
 for d1 in range(d-1):
     def f(Vcat):
-        return((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P[d1]/Vcat)
+        return((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P[d1]/(V0-Vcat))
     TensionCat.append(dichotomie(f,a,b,epsilon))
 
 plt.figure()
@@ -174,5 +174,5 @@ plt.plot(X[:-1], P,label="Puissance nécessaire pour faire avancer le train")
 plt.legend()
 plt.show()
 
-#plt.xlabel("Position du train")
-#plt.ylabel("Puissance nécessaire pour faire avancer le train")
+# plt.xlabel("Position du train")
+# plt.ylabel("Puissance nécessaire pour faire avancer le train")
