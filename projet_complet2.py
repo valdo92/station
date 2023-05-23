@@ -12,8 +12,13 @@ g = 9.81
 v_croisiere = 20 #vitesse de croisière en m/s
 acc = 0.8 # accélération en m/s^2
 d = 1500 # distance en m entre deux sous stations
-#alpha = [0 for i in range(400)] + [ma.atan(0.06) for i in range(200)] + [0 for i in range(200)] + [ma.atan(-0.06) for i in range(200)] + [0 for i in range(500)]
-alpha = [0 for i in range(d)]
+alpha = [0 for i in range(400)] + [ma.atan(0.06) for i in range(100)] + [0 for i in range(400)] + [ma.atan(-0.06) for i in range(100)] + [0 for i in range(500)]
+#alpha = [0 for i in range(d)]
+z=0
+profil_terrain=[]
+for i in range(len(alpha)) :
+    z+=ma.tan(alpha[i])
+    profil_terrain.append(z)
 
 #Variables liées à la partie électrique
 V0 = 835  # en V
@@ -23,8 +28,8 @@ Rs2 = Rs1
 Rlin = 0.016 * 10 ** (-3)  # résistance linéique cable entre SS1 et train (en Ohm par m)
 
 #Variables liées à la partie informatique
-N = 500 # discrétisation
-tau = 1  # pas de temps
+N = 100 # discrétisatipn : correspond au temps que met le train entre 2 sous-stations
+tau = 1  # pas de temps (en s)
 pas_dist = 1 # pas de distance, en m
 epsilon = 1e-6 # précision pour la dichotomie
 
@@ -33,6 +38,8 @@ epsilon = 1e-6 # précision pour la dichotomie
 # Hypothèse : profil de vitesse trapézoïdal, vitesse de croisière de 20 m/s. On accélère et on freine à +- 0.8 m/s^2.
 
 n = int(v_croisiere/acc) # nombre de pas où le train accélère/deccélère
+#Temps
+T = [i*tau for i in range(N)]
 
 #Accélération (t)
 A_t = []
@@ -60,7 +67,16 @@ for i in range(N):
     position = position + V_t[i] * tau
     X_t.append(position)
 
-
+plt.figure()
+plt.subplot(1,3,1)
+plt.plot(T, X_t,label="distance")
+plt.subplot(1,3,2)
+plt.plot(T, V_t,label="Vitesse")
+plt.subplot(1,3,3)
+plt.plot(T, A_t,label="Accélération")
+plt.xlabel("Temps (s)")
+plt.legend()
+plt.show()
 ## Passage en distance
 #Toutes les listes précédentes sont discrétisées en fonction du temps. Pour la suite de l'étude, nous allons les discrétisées en distance (pas de 1 mètre)
 A = []
@@ -100,8 +116,9 @@ def Puissance_Train():
         P.append(-0.20*(0.5*M*(V[i]**2-V[i+1]**2))/tau) #On récupère 20% de l'énergie cinétique, et on prends l'accélération et la vitesse au point juste avant de freiner
     return P
 
-P = Puissance_Train()
-print(P)
+P_train = Puissance_Train()
+P_train.append(0)
+print(P_train)
 #P2=P[:d-dist_acc]
 #for i in range(d-dist_acc,d-1):
 #    P2.append(0)
@@ -132,13 +149,18 @@ def dichotomie(f, a, b, epsilon):
 #On trouve Is1=7718 A et Is2=7186 A
 
 TensionCat = []
-for d1 in range(d-1):
+for d1 in range(d):
     def f(Vcat):
-        return((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P[d1]/Vcat)
+        return((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat))
     TensionCat.append(dichotomie(f,a,b,epsilon))
 
 plt.figure()
-plt.plot(X[1:-1], TensionCat[1:],label="Vcat en fonction de la position du train")
+plt.subplot(1,2,1)
+plt.plot(X, TensionCat,label="Vcat en fonction de la position du train")
+plt.legend()
+plt.subplot(1,2,2)
+plt.plot(X, profil_terrain,label="Profil du terrain")
+plt.ylim([-2,12])
 plt.legend()
 plt.show()
 #print(TensionCat)
@@ -147,32 +169,35 @@ plt.show()
 ##Calcul Puissance Électrique
 U_train = []
 I_train = []
-W_train = []
+W_circuit = []
 
-for i in range(d-1):
+for i in range(d):
     d1 = i
     Vcat = TensionCat[i]
     Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
     Is2 = (V0-Vcat) / (Rlin*(d-d1) + Rs2)
     U_train.append(V0 - Vcat)
     I_train.append(Is1 + Is2)
-    W_train.append(U_train[i] * I_train[i])
-print(W_train)
+    W_circuit.append(U_train[i] * I_train[i])
+print(W_circuit)
 
 plt.figure()
-plt.plot(X[:-1], W_train,label="Puissance fournie par le réseau")
+plt.plot(X, W_circuit,label="Puissance fournie par le réseau")
 plt.legend()
 plt.show()
 
 ##Calcul des courbes
 plt.figure()
-plt.plot(X[:-1], W_train,label="Puissance fournie par le réseau")
+plt.plot(X, W_circuit,label="Puissance fournie par le réseau")
 plt.xlabel("Distance (m)")
 plt.ylabel("Puissances (W)")
 plt.legend()
-plt.plot(X[:-1], P,label="Puissance nécessaire pour faire avancer le train")
+plt.plot(X, P_train,label="Puissance nécessaire pour faire avancer le train")
 plt.legend()
 plt.show()
 
 #plt.xlabel("Position du train")
 #plt.ylabel("Puissance nécessaire pour faire avancer le train")
+
+##Deux trains
+
