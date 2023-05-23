@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-# #Définition des variables
+##Définition des variables
 
 #Variables liées à la partie mécanique
 M = 140000  # en kg, pour une rame
@@ -34,7 +34,7 @@ pas_dist = 1 # pas de distance, en m
 epsilon = 1e-6 # précision pour la dichotomie
 
 
-# # Calcul de la vitesse, position et accélération en fonction du temps
+## Calcul de la vitesse, position et accélération en fonction du temps
 # Hypothèse : profil de vitesse trapézoïdal, vitesse de croisière de 20 m/s. On accélère et on freine à +- 0.8 m/s^2.
 
 n = int(v_croisiere/acc) # nombre de pas où le train accélère/deccélère
@@ -70,13 +70,18 @@ for i in range(N):
 plt.figure()
 plt.subplot(1,3,1)
 plt.plot(T, X_t,label="distance")
+plt.xlabel("Temps (s)")
+plt.legend()
 plt.subplot(1,3,2)
 plt.plot(T, V_t,label="Vitesse")
+plt.xlabel("Temps (s)")
+plt.legend()
 plt.subplot(1,3,3)
 plt.plot(T, A_t,label="Accélération")
 plt.xlabel("Temps (s)")
 plt.legend()
 plt.show()
+
 ## Passage en distance
 #Toutes les listes précédentes sont discrétisées en fonction du temps. Pour la suite de l'étude, nous allons les discrétisées en distance (pas de 1 mètre)
 A = []
@@ -104,27 +109,27 @@ def frottements():
     a = 0.3
     b = 0.1
     l = []
-    for i in range(len(V)):
-        l.append(1000 + a * V[i] + b * V[i] ** 2)
+    for i in range(len(V_t)):
+        l.append(1000 + a * V_t[i] + b * V_t[i] ** 2)
     return l
 
 def Puissance_Train():
-    P = []
-    for i in range(d-dist_acc):
-        P.append((M * A[i] + M * g * ma.sin(alpha[i]) + frottements()[i]) * V[i])
-    for i in range(d-dist_acc,d-1): #Calcul Puissance récupérée par freinage
-        P.append(-0.20*(0.5*M*(V[i]**2-V[i+1]**2))/tau) #On récupère 20% de l'énergie cinétique, et on prends l'accélération et la vitesse au point juste avant de freiner
-    return P
+    P_t = []
+    for i in range(N-n):
+        P_t.append((M * A_t[i] + M * g * ma.sin(alpha[i]) + frottements()[i]) * V_t[i])
+    for i in range(N-n,N-1): #Calcul Puissance récupérée par freinage
+        P_t.append(-0.20*(0.5*M*(V_t[i]**2-V_t[i+1]**2))/tau) #On récupère 20% de l'énergie cinétique, et on prends l'accélération et la vitesse au point juste avant de freiner
+    return P_t
 
-P_train = Puissance_Train()
-P_train.append(0)
-print(P_train)
+P_t_train = Puissance_Train()
+P_t_train.append(0)
+print(P_t_train)
 #P2=P[:d-dist_acc]
 #for i in range(d-dist_acc,d-1):
 #    P2.append(0)
 
 
-# # Résolution numérique pour trouver Vcat, Is1 et Is2
+## Résolution numérique pour trouver Vcat, Is1 et Is2
 
 #Dichotomie
 a = 0.1 # Attention il y a deux zéros dans la fonction recherchée (pour d1=500m). Ici c'est l'intervalle pour le premier zéro.
@@ -142,62 +147,59 @@ def dichotomie(f, a, b, epsilon):
         c+=1
     return m
 
-# On trouve Vcat = 1.4035875878762452 Volt
-# Vcat = 1.4036
-# Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
-# Is2 = (V0-Vcat) / (Rlin*d2 + Rs2)
-# On trouve Is1=7718 A et Is2=7186 A
+#On trouve Vcat = 1.4035875878762452 Volt
+#Vcat = 1.4036
+#Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
+#Is2 = (V0-Vcat) / (Rlin*d2 + Rs2)
+#On trouve Is1=7718 A et Is2=7186 A
 
-TensionCat = []
-for d1 in range(d):
+TensionCat_t = []
+for t in range(N):
     def f(Vcat):
-        return((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat))
-    TensionCat.append(dichotomie(f,a,b,epsilon))
+        return((V0-Vcat)/(Rlin*X_t[t] + Rs1) + (V0-Vcat)/(Rlin*(d-X_t[t]) + Rs2) - P_t_train[t]/(V0-Vcat))
+    TensionCat_t.append(dichotomie(f,a,b,epsilon))
 
 plt.figure()
-plt.subplot(1,2,1)
-plt.plot(X, TensionCat,label="Vcat en fonction de la position du train")
+#plt.subplot(1,2,1)
+plt.plot(T, TensionCat_t,label="Vcat en fonction du temps")
 plt.legend()
-plt.subplot(1,2,2)
-plt.plot(X, profil_terrain,label="Profil du terrain")
-plt.ylim([-2,12])
-plt.legend()
+#plt.subplot(1,2,2)
+#plt.plot(X, profil_terrain,label="Profil du terrain")
+#plt.ylim([-2,12])
+#plt.legend()
 plt.show()
 #print(TensionCat)
 
 
 ##Calcul Puissance Électrique
-U_train = []
-I_train = []
-W_circuit = []
+U_train_t = []
+I_train_t = []
+W_circuit_t = []
 
-for i in range(d):
-    d1 = i
-    Vcat = TensionCat[i]
+for t in range(N):
+    d1 = X_t[t]
+    Vcat = TensionCat_t[t]
     Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
     Is2 = (V0-Vcat) / (Rlin*(d-d1) + Rs2)
-    U_train.append(V0 - Vcat)
-    I_train.append(Is1 + Is2)
-    W_circuit.append(U_train[i] * I_train[i])
-print(W_circuit)
+    U_train_t.append(V0 - Vcat)
+    I_train_t.append(Is1 + Is2)
+    W_circuit_t.append(U_train_t[t] * I_train_t[t])
+print(W_circuit_t)
 
 plt.figure()
-plt.plot(X, W_circuit,label="Puissance fournie par le réseau")
+plt.plot(T, W_circuit_t,label="Puissance fournie par le réseau en fonction du temps")
 plt.legend()
 plt.show()
 
 ##Calcul des courbes
 plt.figure()
-plt.plot(X, W_circuit,label="Puissance fournie par le réseau")
-plt.xlabel("Distance (m)")
+plt.plot(T, W_circuit_t,label="Puissance fournie par le réseau en fonction du temps")
+plt.xlabel("Temps (s)")
 plt.ylabel("Puissances (W)")
 plt.legend()
-plt.plot(X, P_train,label="Puissance nécessaire pour faire avancer le train")
+plt.plot(T, P_t_train,label="Puissance nécessaire pour faire avancer le train en fonction du temps")
 plt.legend()
 plt.show()
 
 #plt.xlabel("Position du train")
 #plt.ylabel("Puissance nécessaire pour faire avancer le train")
-
-##Deux trains
-
