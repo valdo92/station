@@ -7,11 +7,11 @@ import numpy as np
 # #Définition des variables
 
 #Variables liées à la partie mécanique
-M = 140000  # en kg, pour une rame
+M = 45000  #(+15000) en kg, pour une rame
 g = 9.81
-v_croisiere = 20 #vitesse de croisière en m/s
+v_croisiere = 70/3.6#vitesse de croisière en m/s
 acc = 0.8 # accélération en m/s^2
-d = 1500 # distance en m entre deux sous stations
+d = 2000 # distance en m entre deux sous stations
 #alpha = [0 for i in range(400)] + [ma.atan(0.06) for i in range(100)] + [0 for i in range(400)] + [ma.atan(-0.06) for i in range(100)] + [0 for i in range(500)]
 alpha = [0 for i in range(d)]
 z=0
@@ -22,10 +22,10 @@ for i in range(len(alpha)) :
 
 #Variables liées à la partie électrique
 V0 = 835  # en V
-Vcat_ini = 0.1 # en V
-Rs1 = 0.1  # résistance interne des sous stations en Ohm
+Vcat_ini =0.1  # en V
+Rs1 = 33 * 10 ** (-3)  # résistance interne des sous stations en Ohm
 Rs2 = Rs1
-Rlin = 0.016 * 10 ** (-3)  # résistance linéique cable entre SS1 et train (en Ohm par m)
+Rlin = 0.1 * 10 ** (-3)  # résistance linéique cable entre SS1 et train (en Ohm par m)
 
 #Variables liées à la partie informatique
 N = 100 # discrétisatipn : correspond au temps que met le train entre 2 sous-stations
@@ -101,8 +101,8 @@ for i in range(dist_acc):
 
 ##Calcul Puissance Train
 def frottements():
-    a = 0.3
-    b = 0.1
+    a = 2.5
+    b = 0.023
     l = []
     for i in range(len(V)):
         l.append(1000 + a * V[i] + b * V[i] ** 2)
