@@ -12,8 +12,8 @@ g = 9.81
 v_croisiere = 20 #vitesse de croisière en m/s
 acc = 0.8 # accélération en m/s^2
 d = 1500 # distance en m entre deux sous stations
-alpha = [0 for i in range(400)] + [ma.atan(0.06) for i in range(100)] + [0 for i in range(400)] + [ma.atan(-0.06) for i in range(100)] + [0 for i in range(500)]
-#alpha = [0 for i in range(d)]
+#alpha = [0 for i in range(400)] + [ma.atan(0.06) for i in range(100)] + [0 for i in range(400)] + [ma.atan(-0.06) for i in range(100)] + [0 for i in range(500)]
+alpha = [0 for i in range(d)]
 z=0
 profil_terrain=[]
 for i in range(len(alpha)) :
@@ -140,6 +140,8 @@ def dichotomie(f, a, b, epsilon):
             b = m
         m = (a + b)/2
         c+=1
+    if m >= 900:
+        m=900
     return m
 
 # On trouve Vcat = 1.4035875878762452 Volt
@@ -172,12 +174,20 @@ I_train = []
 W_circuit = []
 
 for i in range(d):
+    
     d1 = i
-    Vcat = TensionCat[i]
+    Vcat = TensionCat[i]        
     Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
     Is2 = (V0-Vcat) / (Rlin*(d-d1) + Rs2)
+    Is = Is1 + Is2
+    if Vcat < 500 and Is < 0:
+        Is=0
+    if Vcat > 600 and Is < 1000:
+        Is = 1000
+    if Vcat < 600 and Vcat > 500 and Is < (Vcat-500)*100:
+        Is = (Vcat-500)*1000
     U_train.append(V0 - Vcat)
-    I_train.append(Is1 + Is2)
+    I_train.append(Is)
     W_circuit.append(U_train[i] * I_train[i])
 print(W_circuit)
 
@@ -196,8 +206,8 @@ plt.plot(X, P_train,label="Puissance nécessaire pour faire avancer le train")
 plt.legend()
 plt.show()
 
-#plt.xlabel("Position du train")
-#plt.ylabel("Puissance nécessaire pour faire avancer le train")
+# plt.xlabel("Position du train")
+# plt.ylabel("Puissance nécessaire pour faire avancer le train")
 
-##Deux trains
+# #Deux trains
 

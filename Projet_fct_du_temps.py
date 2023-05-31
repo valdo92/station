@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-##Définition des variables
+# #Définition des variables
 
 #Variables liées à la partie mécanique
 M = 140000  # en kg, pour une rame
@@ -34,7 +34,7 @@ pas_dist = 1 # pas de distance, en m
 epsilon = 1e-6 # précision pour la dichotomie
 
 
-## Calcul de la vitesse, position et accélération en fonction du temps
+# # Calcul de la vitesse, position et accélération en fonction du temps
 # Hypothèse : profil de vitesse trapézoïdal, vitesse de croisière de 20 m/s. On accélère et on freine à +- 0.8 m/s^2.
 
 n = int(v_croisiere/acc) # nombre de pas où le train accélère/deccélère
@@ -129,7 +129,7 @@ print(P_t_train)
 #    P2.append(0)
 
 
-## Résolution numérique pour trouver Vcat, Is1 et Is2
+# # Résolution numérique pour trouver Vcat, Is1 et Is2
 
 #Dichotomie
 a = 0.1 # Attention il y a deux zéros dans la fonction recherchée (pour d1=500m). Ici c'est l'intervalle pour le premier zéro.
@@ -147,11 +147,11 @@ def dichotomie(f, a, b, epsilon):
         c+=1
     return m
 
-#On trouve Vcat = 1.4035875878762452 Volt
-#Vcat = 1.4036
-#Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
-#Is2 = (V0-Vcat) / (Rlin*d2 + Rs2)
-#On trouve Is1=7718 A et Is2=7186 A
+# On trouve Vcat = 1.4035875878762452 Volt
+# Vcat = 1.4036
+# Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
+# Is2 = (V0-Vcat) / (Rlin*d2 + Rs2)
+# On trouve Is1=7718 A et Is2=7186 A
 
 TensionCat_t = []
 for t in range(N):
@@ -201,5 +201,5 @@ plt.plot(T, P_t_train,label="Puissance nécessaire pour faire avancer le train e
 plt.legend()
 plt.show()
 
-#plt.xlabel("Position du train")
-#plt.ylabel("Puissance nécessaire pour faire avancer le train")
+# plt.xlabel("Position du train")
+# plt.ylabel("Puissance nécessaire pour faire avancer le train")
