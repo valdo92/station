@@ -176,16 +176,17 @@ W_circuit = []
 for i in range(d):
     
     d1 = i
-    Vcat = TensionCat[i]        
+    Vcat = TensionCat[i] 
+    U= V0-Vcat
     Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
     Is2 = (V0-Vcat) / (Rlin*(d-d1) + Rs2)
     Is = Is1 + Is2
-    if Vcat < 500 and Is < 0:
+    if U < 500 and Is < 0:
         Is=0
-    if Vcat > 600 and Is < 1000:
+    if U > 600 and Is < 1000:
         Is = 1000
-    if Vcat < 600 and Vcat > 500 and Is < (Vcat-500)*100:
-        Is = (Vcat-500)*1000
+    if U < 600 and U > 500 and Is < (U-500)*100:
+        Is = (U-500)*1000
     U_train.append(V0 - Vcat)
     I_train.append(Is)
     W_circuit.append(U_train[i] * I_train[i])
