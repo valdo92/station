@@ -2,6 +2,7 @@
 import math as ma
 import matplotlib.pyplot as plt
 import numpy as np
+import casadi as ca
 
 
 # #Définition des variables
@@ -126,6 +127,13 @@ print(P_train)
 
 # # Résolution numérique pour trouver Vcat, Is1 et Is2
 
+#minimum fonction
+opti = ca.Opti()
+Vcat = opti.variable(1)
+
+
+
+
 #Dichotomie
 a = 0.1 # Attention il y a deux zéros dans la fonction recherchée (pour d1=500m). Ici c'est l'intervalle pour le premier zéro.
 b = 1000
@@ -153,8 +161,28 @@ def dichotomie(f, a, b, epsilon):
 TensionCat = []
 for d1 in range(d):
     def f(Vcat):
-        return((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat))
-    TensionCat.append(dichotomie(f,a,b,epsilon))
+        return(((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat))*((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat)))
+   
+    opti.minimize(f(Vcat))
+    opti.solver('ipopt')
+
+
+    sol = opti.solve()
+    TensionCat.append(sol.value(Vcat))
+
+# +
+d1=1780
+
+def f(Vcat):
+    return(((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat))*((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat)))
+   
+opti.minimize(f(Vcat))
+opti.solver('ipopt')
+
+
+sol = opti.solve()
+sol.value(Vcat)
+# -
 
 plt.figure()
 plt.subplot(1,2,1)
