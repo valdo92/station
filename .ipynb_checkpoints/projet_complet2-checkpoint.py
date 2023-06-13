@@ -44,6 +44,7 @@ n = int(v_croisiere/acc) # nombre de pas où le train accélère/deccélère
 #Temps
 T = [i*tau for i in range(N)]
 
+# +
 #Vitesse (t)
 A_t= [0]
 V_t = [0]
@@ -94,11 +95,13 @@ while True:
                 
                 break
         break
+# -
 
 N= len(V_t)
+print(N)
 T = np.arange(0,N,1)
-len(X_t)
-
+print(len(X_t))
+t_ = np.arange(0, N*n_station,1)
 
 plt.figure()
 plt.subplot(1,3,1)
@@ -116,8 +119,20 @@ A = []
 V = []
 X = []
 
-V_t=V_t
+# +
 
+for k in range(n_station-1):
+    
+    for i in range (N):
+            X_t.append(400*(k+1)+X_t[i])
+            V_t.append(V_t[i])
+            A_t.append(A_t[i])
+
+
+plt.plot(X_t,t_)
+
+
+# -
 
 ##Calcul Puissance Train
 def frottements():
@@ -128,9 +143,12 @@ def frottements():
         l.append(1000 + a * V_t[i] + b * V_t[i] ** 2)
     return l
 
+# +
+
+
 def Puissance_Train():
     P = []
-    for i in range(D-1):
+    for i in range(len(X_t)-1):
         if X_t[i]< d_freinage:
             P.append((M * A_t[i] + M * g * ma.sin(alpha[i]) + frottements()[i]) * V_t[i])
         else :
@@ -138,6 +156,9 @@ def Puissance_Train():
             P.append(-0.20*(0.5*M*(V_t[i]**2-V_t[i+1]**2))/tau) #On récupère 20% de l'énergie cinétique, et on prends l'accélération et la vitesse au point juste avant de freiner
     
     return P*n_station
+
+
+# -
 
 P_train = Puissance_Train()
 P_train.append(0)
@@ -181,9 +202,11 @@ def dichotomie(f, a, b, epsilon):
 # On trouve Is1=7718 A et Is2=7186 A
 
 TensionCat = []
-for d1 in range(d):
+for i in range(len(X_t)):
+    d=X_t[i]
+    d1=d%D #distance à la dernière sous sation
     def f(Vcat):
-        return(((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat))*((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat)))
+        return(((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(V0-Vcat))*((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(V0-Vcat)))
    
     opti.minimize(f(Vcat))
     opti.solver('ipopt')
@@ -206,14 +229,18 @@ sol = opti.solve()
 sol.value(Vcat)
 # -
 
+print (len(TensionCat))
+
 plt.figure()
 plt.subplot(1,2,1)
-plt.plot(X, TensionCat,label="Vcat en fonction de la position du train")
+plt.plot(X_t, TensionCat,label="Vcat en fonction de la position du train")
 plt.legend()
+# plt.subplot(1,2,2)
+# plt.plot(X_t, profil_terrain,label="Profil du terrain")
+# plt.ylim([-2,12])
+# plt.legend()
 plt.subplot(1,2,2)
-plt.plot(X, profil_terrain,label="Profil du terrain")
-plt.ylim([-2,12])
-plt.legend()
+plt.plot(X_t[-37:], TensionCat[-37:])
 plt.show()
 #print(TensionCat)
 
