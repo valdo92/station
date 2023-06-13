@@ -13,10 +13,11 @@ g = 9.81
 v_croisiere = 70/3.6#vitesse de croisière en m/s
 acc = 0.8 # accélération en m/s^2
 d = 2000 # distance en m entre deux sous stations
-D=3000 # distance entre 2 stations
+D=400 # distance entre 2 stations
 #alpha = [0 for i in range(400)] + [ma.atan(0.06) for i in range(100)] + [0 for i in range(400)] + [ma.atan(-0.06) for i in range(100)] + [0 for i in range(500)]
 alpha = [0 for i in range(d)]
 z=0
+n_station = 20
 profil_terrain=[]
 for i in range(len(alpha)) :
     z+=ma.tan(alpha[i])
@@ -43,31 +44,61 @@ n = int(v_croisiere/acc) # nombre de pas où le train accélère/deccélère
 #Temps
 T = [i*tau for i in range(N)]
 
-#Accélération (t)
-A_t = []
-for i in range(n):
-    A_t.append(acc)
-for i in range(N-2*n):
-    A_t.append(0)
-for i in range(n):
-    A_t.append(-acc)
-
 #Vitesse (t)
-V_t = []
-#print(n)
-for i in range(n):
-    V_t.append(acc * tau * i)
-for i in range(N-2*n):
-    V_t.append(v_croisiere)
-for i in range(n):
-    V_t.append(v_croisiere - acc * tau * i)
+A_t= [0]
+V_t = [0]
+X_t = [0]
+k=0
+l=0
 
-#Position (t)
-X_t = []
-position = 0
-for i in range(N):
-    position = position + V_t[i] * tau
-    X_t.append(position)
+while True:
+    if V_t[k] < 35/3.6:
+        t=70000
+        a=(t-(1000 + 2.5 * V_t[len(V_t)-1] + 0.023 * V_t[len(V_t)-1] ** 2))/M
+        A_t.append(a)
+        v=V_t[len(V_t)-1]+tau*a
+        #-g*M*ma.sin(alpha[k])
+        V_t.append(v)
+        k+=1
+    elif 35/3.6 <= V_t[len(V_t)-1] < 70/3.6:
+        t=(70000*35/3.6)/V_t[len(V_t)-1]
+        a=(t-(1000 + 2.5 * V_t[len(V_t)-1] + 0.023 * V_t[len(V_t)-1] ** 2))/M
+        v=V_t[len(V_t)-1]+tau*a
+        V_t.append(v)
+        A_t.append(a)
+        
+    elif V_t[len(V_t)-1] >= 70/3.6:
+        t=0
+        a=(t-(1000 + 2.5 * V_t[len(V_t)-1] + 0.023 * V_t[len(V_t)-1] ** 2))/M
+        v=V_t[len(V_t)-1]+tau*a
+        V_t.append(v)
+        A_t.append(a)
+        
+    X_t.append(X_t[len(X_t)-1]+V_t[len(V_t)-1]*tau)
+
+    d_freinage=-0.6*(V_t[len(V_t)-1]/1.2)**2 + V_t[len(V_t)-1]*(V_t[len(V_t)-1]/1.2)
+    
+    if d_freinage> D-X_t[len(X_t)-1]:
+        while V_t[len(V_t)-1]>0:
+            V_t.append(V_t[len(V_t)-1]-1.2*tau)
+            X_t.append(X_t[len(X_t)-1]+V_t[len(V_t)-1]*tau)
+            A_t.append(a)
+            
+            if V_t[len(V_t)-1]<0:
+                V_t.pop()
+                V_t.append(0)
+                print(V_t)
+                X_t.pop()
+          
+                X_t.append(X_t[len(X_t)-1]+V_t[len(V_t)-1]*tau)
+                
+                break
+        break
+
+N= len(V_t)
+T = np.arange(0,N,1)
+len(X_t)
+
 
 plt.figure()
 plt.subplot(1,3,1)
@@ -85,20 +116,7 @@ A = []
 V = []
 X = []
 
-dist_acc = int(v_croisiere*(v_croisiere/acc)/2) # distance d'acc et de freinage = 250m (aire sous la courbe de vitesse) Cela représente le nouveau "n"
-
-for i in range(dist_acc):
-    X.append(i*pas_dist)
-    A.append(acc)
-    V.append(acc*ma.sqrt(2/acc)*ma.sqrt(i))
-for i in range(dist_acc,d-dist_acc):
-    X.append(i*pas_dist)
-    A.append(0)
-    V.append(v_croisiere)
-for i in range(dist_acc):
-    X.append(d-dist_acc+i*pas_dist)
-    A.append(-acc)
-    V.append(v_croisiere - acc*ma.sqrt(2/acc)*ma.sqrt(i))
+V_t=V_t
 
 
 ##Calcul Puissance Train
@@ -106,17 +124,20 @@ def frottements():
     a = 2.5
     b = 0.023
     l = []
-    for i in range(len(V)):
-        l.append(1000 + a * V[i] + b * V[i] ** 2)
+    for i in range(len(V_t)):
+        l.append(1000 + a * V_t[i] + b * V_t[i] ** 2)
     return l
 
 def Puissance_Train():
     P = []
-    for i in range(d-dist_acc):
-        P.append((M * A[i] + M * g * ma.sin(alpha[i]) + frottements()[i]) * V[i])
-    for i in range(d-dist_acc,d-1): #Calcul Puissance récupérée par freinage
-        P.append(-0.20*(0.5*M*(V[i]**2-V[i+1]**2))/tau) #On récupère 20% de l'énergie cinétique, et on prends l'accélération et la vitesse au point juste avant de freiner
-    return P
+    for i in range(D-1):
+        if X_t[i]< d_freinage:
+            P.append((M * A_t[i] + M * g * ma.sin(alpha[i]) + frottements()[i]) * V_t[i])
+        else :
+   
+            P.append(-0.20*(0.5*M*(V_t[i]**2-V_t[i+1]**2))/tau) #On récupère 20% de l'énergie cinétique, et on prends l'accélération et la vitesse au point juste avant de freiner
+    
+    return P*n_station
 
 P_train = Puissance_Train()
 P_train.append(0)
