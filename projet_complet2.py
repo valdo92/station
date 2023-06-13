@@ -13,6 +13,7 @@ g = 9.81
 v_croisiere = 70/3.6#vitesse de croisière en m/s
 acc = 0.8 # accélération en m/s^2
 d = 2000 # distance en m entre deux sous stations
+D=3000 # distance entre 2 stations
 #alpha = [0 for i in range(400)] + [ma.atan(0.06) for i in range(100)] + [0 for i in range(400)] + [ma.atan(-0.06) for i in range(100)] + [0 for i in range(500)]
 alpha = [0 for i in range(d)]
 z=0
@@ -196,34 +197,46 @@ plt.show()
 #print(TensionCat)
 
 
+# +
 ##Calcul Puissance Électrique
 U_train = []
 I_train = []
 W_circuit = []
-
-for i in range(d):
     
+for i in range(d):
+
     d1 = i
     Vcat = TensionCat[i] 
-    U= V0-Vcat
+
+    U= Vcat
     Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
     Is2 = (V0-Vcat) / (Rlin*(d-d1) + Rs2)
     Is = Is1 + Is2
-    if U < 500 and Is < 0:
-        Is=0
-    if U > 600 and Is < 1000:
-        Is = 1000
-    if U < 600 and U > 500 and Is < (U-500)*100:
-        Is = (U-500)*1000
-    U_train.append(V0 - Vcat)
-    I_train.append(Is)
-    W_circuit.append(U_train[i] * I_train[i])
-print(W_circuit)
+    P=U*Is
+#     if U < 500 :
+#         Is=0
+#     if U > 600 :
+#         Is = 1000
 
+#     if U < 600 and U > 500 :
+#         Is = (U-500)*100
+
+    U_train.append(U)
+    I_train.append(Is) 
+    W_circuit.append(U_train[i] * I_train[i])
+print(len(W_circuit), len(U_train), len(I_train))
+
+# +
 plt.figure()
-plt.plot(X, W_circuit,label="Puissance fournie par le réseau")
+plt.subplot(2,1,2)
+plt.plot(X, U_train,label="Vcat")
+plt.subplot(2,1,1)
+plt.plot(X, I_train,label="Icat ")
 plt.legend()
 plt.show()
+
+plt.plot(X,W_circuit, label = "puissance électrique")
+# -
 
 ##Calcul des courbes
 plt.figure()
