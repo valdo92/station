@@ -224,7 +224,7 @@ for i in range(len(X_t)):
 
     sol = opti.solve()
     TensionCat.append(sol.value(Vcat))
-    
+
 
 print (len(TensionCat))
 
