@@ -83,7 +83,7 @@ while True:
         while V_t[len(V_t)-1]>0:
             V_t.append(V_t[len(V_t)-1]-1.2*tau)
             X_t.append(X_t[len(X_t)-1]+V_t[len(V_t)-1]*tau)
-            A_t.append(a)
+            A_t.append(-1.2)
             
             if V_t[len(V_t)-1]<0:
                 V_t.pop()
@@ -148,7 +148,7 @@ def frottements():
 
 def Puissance_Train():
     P = []
-    for i in range(len(X_t)-1):
+    for i in range(37):
         if X_t[i]< d_freinage:
             P.append((M * A_t[i] + M * g * ma.sin(alpha[i]) + frottements()[i]) * V_t[i])
         else :
@@ -157,16 +157,17 @@ def Puissance_Train():
     
     return P*n_station
 
-
-# -
-
+# +
 P_train = Puissance_Train()
-P_train.append(0)
-print(P_train)
+
+print(len(P_train))
 #P2=P[:d-dist_acc]
 #for i in range(d-dist_acc,d-1):
 #    P2.append(0)
+# -
 
+
+plt.plot(X_t[-37:], P_train[-37:])
 
 # # Résolution numérique pour trouver Vcat, Is1 et Is2
 
@@ -201,33 +202,29 @@ def dichotomie(f, a, b, epsilon):
 # Is2 = (V0-Vcat) / (Rlin*d2 + Rs2)
 # On trouve Is1=7718 A et Is2=7186 A
 
+def g(x):
+    return((x**2 +1))
+
+
+opti.minimize(g(Vcat))
+opti.solver('ipopt')
+sol = opti.solve()
+sol.value(Vcat)
+
 TensionCat = []
 for i in range(len(X_t)):
     d=X_t[i]
     d1=d%D #distance à la dernière sous sation
     def f(Vcat):
-        return(((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(V0-Vcat))*((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(V0-Vcat)))
+        return(((-V0+Vcat)/(Rlin*d1 + Rs1) + (-V0+Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(Vcat)))
    
-    opti.minimize(f(Vcat))
+    opti.minimize(f(Vcat)**2)
     opti.solver('ipopt')
 
 
     sol = opti.solve()
     TensionCat.append(sol.value(Vcat))
-
-# +
-d1=1780
-
-def f(Vcat):
-    return(((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat))*((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[d1]/(V0-Vcat)))
-   
-opti.minimize(f(Vcat))
-opti.solver('ipopt')
-
-
-sol = opti.solve()
-sol.value(Vcat)
-# -
+    
 
 print (len(TensionCat))
 
@@ -251,14 +248,15 @@ U_train = []
 I_train = []
 W_circuit = []
     
-for i in range(d):
+for i in range(len(TensionCat)):
+    d=X_t[i]
 
-    d1 = i
+    d1 = d%D
     Vcat = TensionCat[i] 
 
     U= Vcat
     Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
-    Is2 = (V0-Vcat) / (Rlin*(d-d1) + Rs2)
+    Is2 = (V0-Vcat) / (Rlin*(D-d1) + Rs2)
     Is = Is1 + Is2
     P=U*Is
 #     if U < 500 :
@@ -277,22 +275,24 @@ print(len(W_circuit), len(U_train), len(I_train))
 # +
 plt.figure()
 plt.subplot(2,1,2)
-plt.plot(X, U_train,label="Vcat")
+plt.plot(X_t, U_train,label="Vcat")
+plt.legend()
 plt.subplot(2,1,1)
-plt.plot(X, I_train,label="Icat ")
+plt.plot(X_t, I_train,label="Icat ")
 plt.legend()
 plt.show()
 
-plt.plot(X,W_circuit, label = "puissance électrique")
+plt.plot(X_t,W_circuit, label = "puissance électrique")
+plt.legend()
 # -
 
 ##Calcul des courbes
 plt.figure()
-plt.plot(X, W_circuit,label="Puissance fournie par le réseau")
+plt.plot(X_t, W_circuit,label="Puissance fournie par le réseau")
 plt.xlabel("Distance (m)")
 plt.ylabel("Puissances (W)")
 plt.legend()
-plt.plot(X, P_train,label="Puissance nécessaire pour faire avancer le train")
+plt.plot(X_t, P_train,label="Puissance nécessaire pour faire avancer le train")
 plt.legend()
 plt.show()
 

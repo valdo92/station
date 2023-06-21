@@ -167,6 +167,8 @@ print(len(P_train))
 # -
 
 
+plt.plot(X_t[-37:], P_train[-37:])
+
 # # Résolution numérique pour trouver Vcat, Is1 et Is2
 
 #minimum fonction
@@ -200,19 +202,29 @@ def dichotomie(f, a, b, epsilon):
 # Is2 = (V0-Vcat) / (Rlin*d2 + Rs2)
 # On trouve Is1=7718 A et Is2=7186 A
 
+def g(x):
+    return((x**2 +1))
+
+
+opti.minimize(g(Vcat))
+opti.solver('ipopt')
+sol = opti.solve()
+sol.value(Vcat)
+
 TensionCat = []
 for i in range(len(X_t)):
     d=X_t[i]
     d1=d%D #distance à la dernière sous sation
     def f(Vcat):
-        return(((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(V0-Vcat))*((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(V0-Vcat)))
+        return(((-V0+Vcat)/(Rlin*d1 + Rs1) + (-V0+Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(Vcat)))
    
-    opti.minimize(f(Vcat))
+    opti.minimize(f(Vcat)**2)
     opti.solver('ipopt')
 
 
     sol = opti.solve()
     TensionCat.append(sol.value(Vcat))
+    
 
 print (len(TensionCat))
 
