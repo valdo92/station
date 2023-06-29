@@ -3,6 +3,7 @@ import math as ma
 import matplotlib.pyplot as plt
 import numpy as np
 import casadi as ca
+import scipy as sc
 
 
 # #Définition des variables
@@ -13,7 +14,7 @@ g = 9.81
 v_croisiere = 70/3.6#vitesse de croisière en m/s
 acc = 0.8 # accélération en m/s^2
 d = 2000 # distance en m entre deux sous stations
-D=400 # distance entre 2 stations
+D=500 # distance entre 2 stations
 #alpha = [0 for i in range(400)] + [ma.atan(0.06) for i in range(100)] + [0 for i in range(400)] + [ma.atan(-0.06) for i in range(100)] + [0 for i in range(500)]
 alpha = [0 for i in range(d)]
 z=0
@@ -124,12 +125,12 @@ X = []
 for k in range(n_station-1):
     
     for i in range (N):
-            X_t.append(400*(k+1)+X_t[i])
+            X_t.append(D*(k+1)+X_t[i])
             V_t.append(V_t[i])
             A_t.append(A_t[i])
 
 
-plt.plot(X_t,t_)
+plt.plot(t_,X_t)
 
 
 # -
@@ -148,7 +149,7 @@ def frottements():
 
 def Puissance_Train():
     P = []
-    for i in range(37):
+    for i in range(N):
         if X_t[i]< d_freinage:
             P.append((M * A_t[i] + M * g * ma.sin(alpha[i]) + frottements()[i]) * V_t[i])
         else :
@@ -167,63 +168,19 @@ print(len(P_train))
 # -
 
 
-plt.plot(X_t[-37:], P_train[-37:])
+plt.plot(X_t, P_train)
 
 # # Résolution numérique pour trouver Vcat, Is1 et Is2
-
-#minimum fonction
-opti = ca.Opti()
-Vcat = opti.variable(1)
-
-
-
-
-#Dichotomie
-a = 0.1 # Attention il y a deux zéros dans la fonction recherchée (pour d1=500m). Ici c'est l'intervalle pour le premier zéro.
-b = 1000
-
-def dichotomie(f, a, b, epsilon):
-    m = (a + b)/2
-    c=0
-    while abs(a - b) > epsilon:
-        if f(a)*f(m) > 0:
-            a = m
-        else:
-            b = m
-        m = (a + b)/2
-        c+=1
-    if V0- m >= 900:
-        m=V0-900
-    return m
-
-# On trouve Vcat = 1.4035875878762452 Volt
-# Vcat = 1.4036
-# Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
-# Is2 = (V0-Vcat) / (Rlin*d2 + Rs2)
-# On trouve Is1=7718 A et Is2=7186 A
-
-def g(x):
-    return((x**2 +1))
-
-
-opti.minimize(g(Vcat))
-opti.solver('ipopt')
-sol = opti.solve()
-sol.value(Vcat)
 
 TensionCat = []
 for i in range(len(X_t)):
     d=X_t[i]
     d1=d%D #distance à la dernière sous sation
     def f(Vcat):
-        return(((-V0+Vcat)/(Rlin*d1 + Rs1) + (-V0+Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(Vcat)))
-   
-    opti.minimize(f(Vcat)**2)
-    opti.solver('ipopt')
-
-
-    sol = opti.solve()
-    TensionCat.append(sol.value(Vcat))
+        return(((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(Vcat))**2)
+       
+    res= sc.optimize.minimize(f,800)
+    TensionCat.append(res.x)
 
 
 print (len(TensionCat))
@@ -237,7 +194,7 @@ plt.legend()
 # plt.ylim([-2,12])
 # plt.legend()
 plt.subplot(1,2,2)
-plt.plot(X_t[-37:], TensionCat[-37:])
+plt.plot(X_t[-N:], TensionCat[-N:])
 plt.show()
 #print(TensionCat)
 
@@ -266,7 +223,7 @@ for i in range(len(TensionCat)):
 
 #     if U < 600 and U > 500 :
 #         Is = (U-500)*100
-
+    
     U_train.append(U)
     I_train.append(Is) 
     W_circuit.append(U_train[i] * I_train[i])
@@ -278,7 +235,7 @@ plt.subplot(2,1,2)
 plt.plot(X_t, U_train,label="Vcat")
 plt.legend()
 plt.subplot(2,1,1)
-plt.plot(X_t, I_train,label="Icat ")
+plt.plot(X_t[:400], I_train[:400],label="Icat ")
 plt.legend()
 plt.show()
 
@@ -300,4 +257,78 @@ plt.show()
 # plt.ylabel("Puissance nécessaire pour faire avancer le train")
 
 # #Deux trains
+
+
+# +
+# #Deux trains
+def opti_ener(t_attente):
+    TensionCat2 = []
+    TensionCat1 = []
+
+    t2 = np.arange(0, N*n_station+t_attente,1)
+
+    l=[0]*t_attente
+    P_train1= P_train + l
+    P_train2= l + P_train
+
+    X_t_1 = X_t + [X_t[-1]]*t_attente
+    X_t_2 = l +X_t
+
+
+    for i in range(len(X_t_1)):
+        d1=X_t_1[i]%D
+        d2=X_t_2[i]%D #distance à la dernière sous sation
+        def f_2(x):
+            Vcat1 =x[0]
+            Vcat2 = x[1]
+            return(((V0-Vcat1)/(Rlin*(D-d1) + Rs2) + (V0-Vcat2)/(Rlin*(d2) + Rs1) - P_train1[i]/(Vcat1)-P_train2[i]/Vcat2)**2)
+       
+        res= sc.optimize.minimize(f_2,np.array([800,800]),constraints = ({'type':"ineq",'fun':lambda x: 900 - x[0]},{'type':"ineq",'fun':lambda x: 900 - x[1]}))
+        x1,x2 = res.x[0], res.x[1]
+        TensionCat1.append(x1)
+        TensionCat2.append(x2)
+
+
+#     plt.figure()
+#     plt.subplot(2,1,2)
+#     plt.plot(t2, TensionCat1,label="Vcat1")
+#     plt.legend()
+#     plt.subplot(2,1,1)
+#     plt.plot(t2, TensionCat2,label="Vcat2")
+#     plt.legend()
+#     plt.show()
+#     print (res)
+# -
+
+def opti_ener2(t_attente):
+        l=[0]*t_attente
+        P_train1= P_train + l
+        P_train2= l + P_train
+        M=np.array(P_train1)+np.array(P_train2)
+        M[(M<0)]=0
+        return (np.linalg.norm(M))
+
+
+opti_ener(100)
+
+# +
+T=[2,5]
+V= np.array([3,-1,6])
+T==V
+
+V[(V<0)]=0
+V
+# -
+
+y=[]
+for t in t_:
+    y.append(opti_ener2(t))
+plt.plot(t_, y)
+
+print (y.index(min (y)))
+
+
+
+
+
 
