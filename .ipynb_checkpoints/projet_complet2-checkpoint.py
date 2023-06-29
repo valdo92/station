@@ -6,7 +6,9 @@ import casadi as ca
 import scipy as sc
 
 
-# #Définition des variables
+# # Un Train
+
+# ## Définition des variables
 
 #Variables liées à la partie mécanique
 M = 45000  #(+15000) en kg, pour une rame
@@ -38,7 +40,7 @@ pas_dist = 1 # pas de distance, en m
 epsilon = 1e-6 # précision pour la dichotomie
 
 
-# # Calcul de la vitesse, position et accélération en fonction du temps
+# ## Calcul de la vitesse, position et accélération en fonction du temps
 # Hypothèse : profil de vitesse trapézoïdal, vitesse de croisière de 20 m/s. On accélère et on freine à +- 0.8 m/s^2.
 
 n = int(v_croisiere/acc) # nombre de pas où le train accélère/deccélère
@@ -135,6 +137,8 @@ plt.plot(t_,X_t)
 
 # -
 
+# ## Calcul des puissances
+
 ##Calcul Puissance Train
 def frottements():
     a = 2.5
@@ -143,8 +147,6 @@ def frottements():
     for i in range(len(V_t)):
         l.append(1000 + a * V_t[i] + b * V_t[i] ** 2)
     return l
-
-# +
 
 
 def Puissance_Train():
@@ -170,7 +172,7 @@ print(len(P_train))
 
 plt.plot(X_t, P_train)
 
-# # Résolution numérique pour trouver Vcat, Is1 et Is2
+# ## Résolution numérique pour trouver Vcat, Is1 et Is2
 
 TensionCat = []
 for i in range(len(X_t)):
@@ -256,15 +258,13 @@ plt.show()
 # plt.xlabel("Position du train")
 # plt.ylabel("Puissance nécessaire pour faire avancer le train")
 
-# #Deux trains
+# # Deux trains
 
 
-# +
-# #Deux trains
 def opti_ener(t_attente):
     TensionCat2 = []
     TensionCat1 = []
-
+    I1,I2 = [],[]
     t2 = np.arange(0, N*n_station+t_attente,1)
 
     l=[0]*t_attente
@@ -278,27 +278,97 @@ def opti_ener(t_attente):
     for i in range(len(X_t_1)):
         d1=X_t_1[i]%D
         d2=X_t_2[i]%D #distance à la dernière sous sation
-        def f_2(x):
-            Vcat1 =x[0]
-            Vcat2 = x[1]
-            return(((V0-Vcat1)/(Rlin*(D-d1) + Rs2) + (V0-Vcat2)/(Rlin*(d2) + Rs1) - P_train1[i]/(Vcat1)-P_train2[i]/Vcat2)**2)
+        delta = abs(X_t_2[i]-X_t_1[i])
+        
+        if (delta)== 0:
+            TensionCat1.append(835)
+            TensionCat2.append(835)
+            I1.append(0)
+            I2.append(0)
+        
+        elif (delta)<= D:
+             
+            def f_(x):
+                Vcat1 =x[0]
+                Vcat2 = x[1]
+                return(((V0-Vcat1)/(Rlin*(D-d1) + Rs2) + (V0-Vcat2)/(Rlin*(d2) + Rs1) - P_train1[i]/(Vcat1)-P_train2[i]/Vcat2)**2)
        
-        res= sc.optimize.minimize(f_2,np.array([800,800]),constraints = ({'type':"ineq",'fun':lambda x: 900 - x[0]},{'type':"ineq",'fun':lambda x: 900 - x[1]}))
-        x1,x2 = res.x[0], res.x[1]
-        TensionCat1.append(x1)
-        TensionCat2.append(x2)
+            res= sc.optimize.minimize(f_,np.array([800,800]),constraints = ({'type':"ineq",'fun':lambda x: 900 - x[0]},{'type':"ineq",'fun':lambda x: 900 - x[1]}))
+            x1,x2 = float(res.x[0]), float(res.x[1])
+            TensionCat1.append(x1)
+            TensionCat2.append(x2)
+            Vcat1,Vcat2 = x1,x2
+            Is1 = (V0-Vcat1) / (Rlin*d1 + Rs1)
+            Is2 = (V0-Vcat2) / (Rlin*(D-d2) + Rs2)
+            I1.append(Is1 + (Vcat2-Vcat1)/(Rlin*delta))
+            I2.append(Is1 + Is2 - (Is1 + (Vcat2-Vcat1)/(Rlin*delta)))
+            
+        elif (delta)> D:
+             
+            def f_1(Vcat1):
+                return(((V0-Vcat1)/(Rlin*d1 + Rs1) + (V0-Vcat1)/(Rlin*(D-d1) + Rs2) - P_train1[i]/(Vcat1))**2)
+            def f_2(Vcat2):
+                return(((V0-Vcat2)/(Rlin*d1 + Rs1) + (V0-Vcat2)/(Rlin*(D-d1) + Rs2) - P_train2[i]/(Vcat2))**2)
+       
+            res_1 = (sc.optimize.minimize(f_1,800))
+            TensionCat1.append(float(res_1.x))
+            res_2 = (sc.optimize.minimize(f_2,800))
+            TensionCat2.append(float(res_2.x))
+            Vcat1,Vcat2 = float(res_1.x),float(res_2.x)
+            
+            Is1_1 = (V0-Vcat1) / (Rlin*d1 + Rs1)
+            Is2_1 = (V0-Vcat1) / (Rlin*(D-d1) + Rs2)
+            Is1_2 = (V0-Vcat2) / (Rlin*d2 + Rs1)
+            Is2_2 = (V0-Vcat2) / (Rlin*(D-d2) + Rs2)
+            
+            I1.append(Is1_1 + Is2_1)
+            I2.append(Is1_2 + Is2_2)
+    
+    #Puissance
+    P_elec1 = np.array(I1)*np.array(TensionCat1)
+    P_elec2 = np.array(I2)*np.array(TensionCat2)
+    P_tot = P_elec1 + P_elec2
+    #P_tot[(P_tot<0)]=0
+    print(int(100-t_attente))
+    
+    
+    return(np.linalg.norm(P_tot))
 
+opti_ener(64)
 
-#     plt.figure()
-#     plt.subplot(2,1,2)
-#     plt.plot(t2, TensionCat1,label="Vcat1")
-#     plt.legend()
-#     plt.subplot(2,1,1)
-#     plt.plot(t2, TensionCat2,label="Vcat2")
-#     plt.legend()
-#     plt.show()
-#     print (res)
-# -
+#Affichage Puissance
+    plt.figure()
+    plt.subplot(3,1,2)
+    plt.plot(t2, P_elec1,label="P_elec_1")
+    plt.legend()
+    plt.subplot(3,1,1)
+    plt.plot(t2, P_elec2,label="P_elec_2")
+    plt.legend()
+    plt.subplot(3,1,3)
+    plt.plot(t2, P_tot,label="P_tot")
+    plt.legend()
+    plt.show()
+    
+    #Affichage intensité        
+    plt.figure()
+    plt.subplot(2,1,2)
+    plt.plot(t2, I1,label="I1")
+    plt.legend()
+    plt.subplot(2,1,1)
+    plt.plot(t2, I2,label="I2")
+    plt.legend()
+    plt.show()
+    
+    #Affichage Tension 
+    plt.figure()
+    plt.subplot(2,1,2)
+    plt.plot(t2, TensionCat1,label="Vcat1")
+    plt.legend()
+    plt.subplot(2,1,1)
+    plt.plot(t2, TensionCat2,label="Vcat2")
+    plt.legend()
+    plt.show()
+
 
 def opti_ener2(t_attente):
         l=[0]*t_attente
@@ -309,23 +379,12 @@ def opti_ener2(t_attente):
         return (np.linalg.norm(M))
 
 
-opti_ener(100)
-
-# +
-T=[2,5]
-V= np.array([3,-1,6])
-T==V
-
-V[(V<0)]=0
-V
-# -
-
 y=[]
-for t in t_:
-    y.append(opti_ener2(t))
-plt.plot(t_, y)
+for t in t_[:500]:
+    y.append(opti_ener(t))
+plt.plot(t_[:500], y)
 
-print (y.index(min (y)))
+print (y.index(min (y[1:])))
 
 
 
