@@ -6,7 +6,9 @@ import casadi as ca
 import scipy as sc
 
 
-# #Définition des variables
+# # Un Train
+
+# ## Définition des variables
 
 #Variables liées à la partie mécanique
 M = 45000  #(+15000) en kg, pour une rame
@@ -38,7 +40,7 @@ pas_dist = 1 # pas de distance, en m
 epsilon = 1e-6 # précision pour la dichotomie
 
 
-# # Calcul de la vitesse, position et accélération en fonction du temps
+# ## Calcul de la vitesse, position et accélération en fonction du temps
 # Hypothèse : profil de vitesse trapézoïdal, vitesse de croisière de 20 m/s. On accélère et on freine à +- 0.8 m/s^2.
 
 n = int(v_croisiere/acc) # nombre de pas où le train accélère/deccélère
@@ -135,6 +137,8 @@ plt.plot(t_,X_t)
 
 # -
 
+# ## Calcul des puissances
+
 ##Calcul Puissance Train
 def frottements():
     a = 2.5
@@ -143,8 +147,6 @@ def frottements():
     for i in range(len(V_t)):
         l.append(1000 + a * V_t[i] + b * V_t[i] ** 2)
     return l
-
-# +
 
 
 def Puissance_Train():
@@ -170,7 +172,7 @@ print(len(P_train))
 
 plt.plot(X_t, P_train)
 
-# # Résolution numérique pour trouver Vcat, Is1 et Is2
+# ## Résolution numérique pour trouver Vcat, Is1 et Is2
 
 TensionCat = []
 for i in range(len(X_t)):
@@ -256,11 +258,10 @@ plt.show()
 # plt.xlabel("Position du train")
 # plt.ylabel("Puissance nécessaire pour faire avancer le train")
 
-# #Deux trains
+# # Deux trains
 
 
 # +
-# #Deux trains
 def opti_ener(t_attente):
     TensionCat2 = []
     TensionCat1 = []
@@ -310,15 +311,6 @@ def opti_ener2(t_attente):
 
 
 opti_ener(100)
-
-# +
-T=[2,5]
-V= np.array([3,-1,6])
-T==V
-
-V[(V<0)]=0
-V
-# -
 
 y=[]
 for t in t_:
