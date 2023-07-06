@@ -328,9 +328,41 @@ def opti_ener(t_attente):
     P_elec1 = np.array(I1)*np.array(TensionCat1)
     P_elec2 = np.array(I2)*np.array(TensionCat2)
     P_tot = P_elec1 + P_elec2
-    #P_tot[(P_tot<0)]=0
+    P_tot[(P_tot<0)]=0
     print(int(100-t_attente))
     
+    #Affichage Puissance
+    plt.figure()
+    plt.subplot(3,1,2)
+    plt.plot(t2, P_elec1,label="P_elec_1")
+    plt.legend()
+    plt.subplot(3,1,1)
+    plt.plot(t2, P_elec2,label="P_elec_2")
+    plt.legend()
+    plt.subplot(3,1,3)
+    plt.plot(t2, P_tot,label="P_tot")
+    plt.legend()
+    plt.show()
+    
+    #Affichage intensité        
+    plt.figure()
+    plt.subplot(2,1,2)
+    plt.plot(t2, I1,label="I1")
+    plt.legend()
+    plt.subplot(2,1,1)
+    plt.plot(t2, I2,label="I2")
+    plt.legend()
+    plt.show()
+    
+    #Affichage Tension 
+    plt.figure()
+    plt.subplot(2,1,2)
+    plt.plot(t2, TensionCat1,label="Vcat1")
+    plt.legend()
+    plt.subplot(2,1,1)
+    plt.plot(t2, TensionCat2,label="Vcat2")
+    plt.legend()
+    plt.show()
     
     return(np.linalg.norm(P_tot))
 
@@ -385,9 +417,3 @@ for t in t_[:500]:
 plt.plot(t_[:500], y)
 
 print (y.index(min (y[1:])))
-
-
-
-
-
-
