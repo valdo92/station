@@ -108,13 +108,18 @@ t_ = np.arange(0, N*n_station,1)
 
 plt.figure()
 plt.subplot(1,3,1)
-plt.plot(T, X_t,label="distance")
-plt.subplot(1,3,2)
-plt.plot(T, V_t,label="Vitesse")
-plt.subplot(1,3,3)
-plt.plot(T, A_t,label="Accélération")
+plt.plot(T, X_t)
+plt.ylabel("Distance (m)")
 plt.xlabel("Temps (s)")
-plt.legend()
+plt.subplot(1,3,2)
+plt.plot(T, V_t)
+plt.xlabel("Temps (s)")
+plt.ylabel("Vitesse (m/s)")
+plt.subplot(1,3,3)
+plt.plot(T, A_t)
+plt.xlabel("Temps (s)")
+plt.ylabel("Accélération (m/s2)")
+plt.tight_layout()
 plt.show()
 ## Passage en distance
 #Toutes les listes précédentes sont discrétisées en fonction du temps. Pour la suite de l'étude, nous allons les discrétisées en distance (pas de 1 mètre)
@@ -170,7 +175,14 @@ print(len(P_train))
 # -
 
 
-plt.plot(X_t, P_train)
+P_train_joli = [i*1e-6 for i in P_train]
+plt.plot(X_t, P_train_joli)
+plt.ylabel("Puissance mécanique d'un train (MW)")
+plt.xlabel("Distance (m)")
+
+plt.plot(X_t[-N:], P_train_joli[-N:])
+plt.ylabel("Puissance mécanique d'un train (MW)")
+plt.xlabel("Distance (m)")
 
 # ## Résolution numérique pour trouver Vcat, Is1 et Is2
 
@@ -189,7 +201,10 @@ print (len(TensionCat))
 
 plt.figure()
 plt.subplot(1,2,1)
-plt.plot(X_t, TensionCat,label="Vcat en fonction de la position du train")
+plt.plot(X_t, TensionCat)
+#plt.title("Vcat en fonction de la position du train")
+plt.ylabel("Tension Caténaire (V)")
+plt.xlabel("Distance (m)")
 plt.legend()
 # plt.subplot(1,2,2)
 # plt.plot(X_t, profil_terrain,label="Profil du terrain")
@@ -197,6 +212,9 @@ plt.legend()
 # plt.legend()
 plt.subplot(1,2,2)
 plt.plot(X_t[-N:], TensionCat[-N:])
+plt.ylabel("Tension Caténaire (V)")
+plt.xlabel("Distance (m)")
+plt.tight_layout()
 plt.show()
 #print(TensionCat)
 
@@ -234,29 +252,39 @@ print(len(W_circuit), len(U_train), len(I_train))
 # +
 plt.figure()
 plt.subplot(2,1,2)
-plt.plot(X_t, U_train,label="Vcat")
-plt.legend()
+plt.plot(X_t, U_train)
+plt.xlabel("Distance (m)")
+plt.ylabel("Tension caténaire (V)")
 plt.subplot(2,1,1)
-plt.plot(X_t[:400], I_train[:400],label="Icat ")
-plt.legend()
+plt.plot(X_t[:400], I_train[:400])
+plt.xlabel("Distance (m)")
+plt.ylabel("Intensité (A)")
+plt.tight_layout()
 plt.show()
 
-plt.plot(X_t,W_circuit, label = "puissance électrique")
-plt.legend()
+W_circuit_joli = [i*1e-6 for i in W_circuit]
+plt.figure()
+plt.subplot(1,2,1)
+plt.plot(X_t,W_circuit_joli)
+plt.xlabel("Distance (m)")
+plt.ylabel("Puissance électrique d'un train (MW)")
+plt.subplot(1,2,2)
+plt.plot(X_t[:N],W_circuit_joli[:N])
+plt.xlabel("Distance (m)")
+plt.ylabel("Puissance électrique d'un train (MW)")
+plt.tight_layout()
+plt.show()
 # -
 
 ##Calcul des courbes
 plt.figure()
-plt.plot(X_t, W_circuit,label="Puissance fournie par le réseau")
+plt.plot(X_t, W_circuit,label="Puissance électrique fournie par le réseau")
 plt.xlabel("Distance (m)")
 plt.ylabel("Puissances (W)")
 plt.legend()
 plt.plot(X_t, P_train,label="Puissance nécessaire pour faire avancer le train")
 plt.legend()
 plt.show()
-
-# plt.xlabel("Position du train")
-# plt.ylabel("Puissance nécessaire pour faire avancer le train")
 
 # # Deux trains
 
@@ -331,74 +359,61 @@ def opti_ener(t_attente):
     P_tot[(P_tot<0)]=0
     print(int(100-t_attente))
     
-    #Affichage Puissance
-    plt.figure()
-    plt.subplot(3,1,2)
-    plt.plot(t2, P_elec1,label="P_elec_1")
-    plt.legend()
-    plt.subplot(3,1,1)
-    plt.plot(t2, P_elec2,label="P_elec_2")
-    plt.legend()
-    plt.subplot(3,1,3)
-    plt.plot(t2, P_tot,label="P_tot")
-    plt.legend()
-    plt.show()
-    
-    #Affichage intensité        
-    plt.figure()
-    plt.subplot(2,1,2)
-    plt.plot(t2, I1,label="I1")
-    plt.legend()
-    plt.subplot(2,1,1)
-    plt.plot(t2, I2,label="I2")
-    plt.legend()
-    plt.show()
-    
-    #Affichage Tension 
-    plt.figure()
-    plt.subplot(2,1,2)
-    plt.plot(t2, TensionCat1,label="Vcat1")
-    plt.legend()
-    plt.subplot(2,1,1)
-    plt.plot(t2, TensionCat2,label="Vcat2")
-    plt.legend()
-    plt.show()
     
     return(np.linalg.norm(P_tot))
 
 opti_ener(64)
 
-#Affichage Puissance
+#temporaire
+ #Affichage intensité        
     plt.figure()
-    plt.subplot(3,1,2)
-    plt.plot(t2, P_elec1,label="P_elec_1")
-    plt.legend()
-    plt.subplot(3,1,1)
-    plt.plot(t2, P_elec2,label="P_elec_2")
-    plt.legend()
-    plt.subplot(3,1,3)
-    plt.plot(t2, P_tot,label="P_tot")
+    plt.plot(t2, I1,label="I1")
+    plt.xlabel("Temps (s)")
+    plt.ylabel("Intensité du train n°1")
     plt.legend()
     plt.show()
     
-    #Affichage intensité        
     plt.figure()
-    plt.subplot(2,1,2)
-    plt.plot(t2, I1,label="I1")
-    plt.legend()
-    plt.subplot(2,1,1)
     plt.plot(t2, I2,label="I2")
+    plt.xlabel("Temps (s)")
+    plt.ylabel("Intensité du train n°1")
     plt.legend()
     plt.show()
     
     #Affichage Tension 
     plt.figure()
-    plt.subplot(2,1,2)
     plt.plot(t2, TensionCat1,label="Vcat1")
+    plt.xlabel("Temps (s)")
+    plt.ylabel("Tension caténaire du train n°1")
     plt.legend()
-    plt.subplot(2,1,1)
+    plt.show()
+    
+    plt.figure()
     plt.plot(t2, TensionCat2,label="Vcat2")
+    plt.xlabel("Temps (s)")
+    plt.ylabel("Tension caténaire du train n°2")
     plt.legend()
+    plt.show()
+    
+    #affichage puissance
+    plt.figure()
+    plt.plot(t2, P_elec1,label="P_elec_1")
+    plt.xlabel("Temps (s)")
+    plt.ylabel("Puissance électrique du train n°1")
+    plt.legend()
+    plt.show()
+    plt.figure()
+    plt.plot(t2, P_elec2,label="P_elec_2")
+    plt.xlabel("Temps (s)")
+    plt.ylabel("Puissance électrique du train n°2")
+    plt.legend()
+    plt.show()
+    plt.figure()
+    plt.plot(t2, P_tot,label="P_tot")
+    plt.xlabel("Temps (s)")
+    plt.ylabel("Puissance électrique totale")
+    plt.legend()
+    plt.tight_layout()
     plt.show()
 
 
@@ -411,9 +426,18 @@ def opti_ener2(t_attente):
         return (np.linalg.norm(M))
 
 
+# +
 y=[]
 for t in t_[:500]:
     y.append(opti_ener(t))
+
+plt.figure()
 plt.plot(t_[:500], y)
+plt.xlabel("Temps d'attente entre le départ des trains (s)")
+plt.ylabel("Énergie totale consommée par 2 trains (W)")
+plt.show()
+# -
 
 print (y.index(min (y[1:])))
+
+
