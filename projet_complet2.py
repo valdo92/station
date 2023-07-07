@@ -188,10 +188,9 @@ plt.xlabel("Distance (m)")
 
 TensionCat = []
 for i in range(len(X_t)):
-    d=X_t[i]
-    d1=d%D #distance à la dernière sous sation
+    d1=X_t[i]%d #distance à la dernière sous sation
     def f(Vcat):
-        return(((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(D-d1) + Rs2) - P_train[i]/(Vcat))**2)
+        return(((V0-Vcat)/(Rlin*d1 + Rs1) + (V0-Vcat)/(Rlin*(d-d1) + Rs2) - P_train[i]/(Vcat))**2)
        
     res= sc.optimize.minimize(f,800)
     TensionCat.append(res.x)
@@ -226,14 +225,13 @@ I_train = []
 W_circuit = []
     
 for i in range(len(TensionCat)):
-    d=X_t[i]
 
-    d1 = d%D
+    d1 = X_t[i]%d
     Vcat = TensionCat[i] 
 
     U= Vcat
     Is1 = (V0-Vcat) / (Rlin*d1 + Rs1)
-    Is2 = (V0-Vcat) / (Rlin*(D-d1) + Rs2)
+    Is2 = (V0-Vcat) / (Rlin*(d-d1) + Rs2)
     Is = Is1 + Is2
     P=U*Is
 #     if U < 500 :
@@ -256,7 +254,7 @@ plt.plot(X_t, U_train)
 plt.xlabel("Distance (m)")
 plt.ylabel("Tension caténaire (V)")
 plt.subplot(2,1,1)
-plt.plot(X_t[:400], I_train[:400])
+plt.plot(X_t, I_train)
 plt.xlabel("Distance (m)")
 plt.ylabel("Intensité (A)")
 plt.tight_layout()
@@ -304,8 +302,8 @@ def opti_ener(t_attente):
 
 
     for i in range(len(X_t_1)):
-        d1=X_t_1[i]%D
-        d2=X_t_2[i]%D #distance à la dernière sous sation
+        d1=X_t_1[i]%d
+        d2=X_t_2[i]%d #distance à la dernière sous sation
         delta = abs(X_t_2[i]-X_t_1[i])
         
         if (delta)== 0:
@@ -314,12 +312,12 @@ def opti_ener(t_attente):
             I1.append(0)
             I2.append(0)
         
-        elif (delta)<= D:
+        elif (delta)<= d:
              
             def f_(x):
                 Vcat1 =x[0]
                 Vcat2 = x[1]
-                return(((V0-Vcat1)/(Rlin*(D-d1) + Rs2) + (V0-Vcat2)/(Rlin*(d2) + Rs1) - P_train1[i]/(Vcat1)-P_train2[i]/Vcat2)**2)
+                return(((V0-Vcat1)/(Rlin*(d-d1) + Rs2) + (V0-Vcat2)/(Rlin*(d2) + Rs1) - P_train1[i]/(Vcat1)-P_train2[i]/Vcat2)**2)
        
             res= sc.optimize.minimize(f_,np.array([800,800]),constraints = ({'type':"ineq",'fun':lambda x: 900 - x[0]},{'type':"ineq",'fun':lambda x: 900 - x[1]}))
             x1,x2 = float(res.x[0]), float(res.x[1])
@@ -327,16 +325,16 @@ def opti_ener(t_attente):
             TensionCat2.append(x2)
             Vcat1,Vcat2 = x1,x2
             Is1 = (V0-Vcat1) / (Rlin*d1 + Rs1)
-            Is2 = (V0-Vcat2) / (Rlin*(D-d2) + Rs2)
+            Is2 = (V0-Vcat2) / (Rlin*(d-d2) + Rs2)
             I1.append(Is1 + (Vcat2-Vcat1)/(Rlin*delta))
             I2.append(Is1 + Is2 - (Is1 + (Vcat2-Vcat1)/(Rlin*delta)))
             
-        elif (delta)> D:
+        elif (delta)> d:
              
             def f_1(Vcat1):
-                return(((V0-Vcat1)/(Rlin*d1 + Rs1) + (V0-Vcat1)/(Rlin*(D-d1) + Rs2) - P_train1[i]/(Vcat1))**2)
+                return(((V0-Vcat1)/(Rlin*d1 + Rs1) + (V0-Vcat1)/(Rlin*(d-d1) + Rs2) - P_train1[i]/(Vcat1))**2)
             def f_2(Vcat2):
-                return(((V0-Vcat2)/(Rlin*d1 + Rs1) + (V0-Vcat2)/(Rlin*(D-d1) + Rs2) - P_train2[i]/(Vcat2))**2)
+                return(((V0-Vcat2)/(Rlin*d1 + Rs1) + (V0-Vcat2)/(Rlin*(d-d1) + Rs2) - P_train2[i]/(Vcat2))**2)
        
             res_1 = (sc.optimize.minimize(f_1,800))
             TensionCat1.append(float(res_1.x))
@@ -345,9 +343,9 @@ def opti_ener(t_attente):
             Vcat1,Vcat2 = float(res_1.x),float(res_2.x)
             
             Is1_1 = (V0-Vcat1) / (Rlin*d1 + Rs1)
-            Is2_1 = (V0-Vcat1) / (Rlin*(D-d1) + Rs2)
+            Is2_1 = (V0-Vcat1) / (Rlin*(d-d1) + Rs2)
             Is1_2 = (V0-Vcat2) / (Rlin*d2 + Rs1)
-            Is2_2 = (V0-Vcat2) / (Rlin*(D-d2) + Rs2)
+            Is2_2 = (V0-Vcat2) / (Rlin*(d-d2) + Rs2)
             
             I1.append(Is1_1 + Is2_1)
             I2.append(Is1_2 + Is2_2)
