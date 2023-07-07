@@ -364,80 +364,194 @@ def opti_ener(t_attente):
 
 opti_ener(64)
 
+# +
 #temporaire
  #Affichage intensité        
-    plt.figure()
-    plt.plot(t2, I1,label="I1")
-    plt.xlabel("Temps (s)")
-    plt.ylabel("Intensité du train n°1")
-    plt.legend()
-    plt.show()
+#     plt.figure()
+#     plt.plot(t2, I1,label="I1")
+#     plt.xlabel("Temps (s)")
+#     plt.ylabel("Intensité du train n°1")
+#     plt.legend()
+#     plt.show()
     
-    plt.figure()
-    plt.plot(t2, I2,label="I2")
-    plt.xlabel("Temps (s)")
-    plt.ylabel("Intensité du train n°1")
-    plt.legend()
-    plt.show()
+#     plt.figure()
+#     plt.plot(t2, I2,label="I2")
+#     plt.xlabel("Temps (s)")
+#     plt.ylabel("Intensité du train n°1")
+#     plt.legend()
+#     plt.show()
     
-    #Affichage Tension 
-    plt.figure()
-    plt.plot(t2, TensionCat1,label="Vcat1")
-    plt.xlabel("Temps (s)")
-    plt.ylabel("Tension caténaire du train n°1")
-    plt.legend()
-    plt.show()
+#     #Affichage Tension 
+#     plt.figure()
+#     plt.plot(t2, TensionCat1,label="Vcat1")
+#     plt.xlabel("Temps (s)")
+#     plt.ylabel("Tension caténaire du train n°1")
+#     plt.legend()
+#     plt.show()
     
-    plt.figure()
-    plt.plot(t2, TensionCat2,label="Vcat2")
-    plt.xlabel("Temps (s)")
-    plt.ylabel("Tension caténaire du train n°2")
-    plt.legend()
-    plt.show()
+#     plt.figure()
+#     plt.plot(t2, TensionCat2,label="Vcat2")
+#     plt.xlabel("Temps (s)")
+#     plt.ylabel("Tension caténaire du train n°2")
+#     plt.legend()
+#     plt.show()
     
-    #affichage puissance
-    plt.figure()
-    plt.plot(t2, P_elec1,label="P_elec_1")
-    plt.xlabel("Temps (s)")
-    plt.ylabel("Puissance électrique du train n°1")
-    plt.legend()
-    plt.show()
-    plt.figure()
-    plt.plot(t2, P_elec2,label="P_elec_2")
-    plt.xlabel("Temps (s)")
-    plt.ylabel("Puissance électrique du train n°2")
-    plt.legend()
-    plt.show()
-    plt.figure()
-    plt.plot(t2, P_tot,label="P_tot")
-    plt.xlabel("Temps (s)")
-    plt.ylabel("Puissance électrique totale")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-
-
-def opti_ener2(t_attente):
-        l=[0]*t_attente
-        P_train1= P_train + l
-        P_train2= l + P_train
-        M=np.array(P_train1)+np.array(P_train2)
-        M[(M<0)]=0
-        return (np.linalg.norm(M))
-
+#     #affichage puissance
+#     plt.figure()
+#     plt.plot(t2, P_elec1,label="P_elec_1")
+#     plt.xlabel("Temps (s)")
+#     plt.ylabel("Puissance électrique du train n°1")
+#     plt.legend()
+#     plt.show()
+#     plt.figure()
+#     plt.plot(t2, P_elec2,label="P_elec_2")
+#     plt.xlabel("Temps (s)")
+#     plt.ylabel("Puissance électrique du train n°2")
+#     plt.legend()
+#     plt.show()
+#     plt.figure()
+#     plt.plot(t2, P_tot,label="P_tot")
+#     plt.xlabel("Temps (s)")
+#     plt.ylabel("Puissance électrique totale")
+#     plt.legend()
+#     plt.tight_layout()
+#     plt.show()
 
 # +
-y=[]
-for t in t_[:500]:
-    y.append(opti_ener(t))
+# def opti_ener2(t_attente):
+#         l=[0]*t_attente
+#         P_train1= P_train + l
+#         P_train2= l + P_train
+#         M=np.array(P_train1)+np.array(P_train2)
+#         M[(M<0)]=0
+#         return (np.linalg.norm(M))
 
-plt.figure()
-plt.plot(t_[:500], y)
-plt.xlabel("Temps d'attente entre le départ des trains (s)")
-plt.ylabel("Énergie totale consommée par 2 trains (W)")
-plt.show()
+# +
+# y=[]
+# for t in t_[:500]:
+#     y.append(opti_ener(t))
+
+# plt.figure()
+# plt.plot(t_[:500], y)
+# plt.xlabel("Temps d'attente entre le départ des trains (s)")
+# plt.ylabel("Énergie totale consommée par 2 trains (W)")
+# plt.show()
+
+# +
+# print (y.index(min (y[1:])))
+
+# +
+n=10
+T_attente= [10]*n
+print (sum(T_attente[:1]))
+
+def fn(T_attente):
+    V=[[]]*n
+    X=[X_t]*n
+    Ptrain = [[]]*n
+    tn = np.arange(0, N*n_station+sum(T_attente),1)
+    for k in range (0, len(T_attente)):
+        lk=[0] * sum(T_attente[:k])
+        l_k = [0] * sum(T_attente[k:])
+        X[k] = lk + X_t + [X_t[-1]]*sum(T_attente[k:])
+        Ptrain[k]= lk + P_train + l_k
+        I = [[]]*n
+        V = [[]]*n
+        
+
+
+
+    for i in range (0,len(X[1])):
+       
+        ss = [X[k][i]//d for k in range (n)]
+        print(ss)
+        for l in range (n):
+            if l in ss :
+                indices_ss=[index for index, element in enumerate(ss) if element ==l]
+ 
+                if X[indices_ss[0]][i] != 0 and X[max(indices_ss)][i] !=0:
+                    global a
+                    a = int(indices_ss.pop(0))
+                
+                    alpha=0
+                    
+                    beta =0
+                       
+                    for i in range(n):
+                        if i <=l:
+                            
+                            alpha+= 1/(Rs1+Rlin*d*(l-i))
+                        else :
+                            beta+= 1/(Rs1+Rlin*d*(i-k+1))
+    
+                    def minimize (V) :
+                        v=[V]
+                        print(X[indices_ss[0]][i])
+                    
+
+                    
+                        Vk=V0*alpha+V*(1/((Rlin*X[indices_ss[0]][i])+alpha*(Rlin*X[indices_ss[0]][i])))
+                        Vk_1=V0*beta+V*(1/((Rlin*(d-X[max(indices_ss)][i]))+beta*Rlin*(d-X[max(indices_ss)][i])))
+                        I1=(Vk-V)/(Rlin*X[indices_ss[0]][i])
+                        I2=(Vk_1-V)/(Rlin*(d-X[max(indices_ss)][i]))
+                        I=[float(I1)]
+                    
+                        s=Ptrain[indices_ss[0]][i]/v[0]
+                    
+                        for j in range (len(indices_ss)-1):
+                            delta_=X[indices_ss[j+1]][i]-X[indices_ss[j]][i]
+                            I.append(float(I[j]-Ptrain[indices_ss[j]][i]/v[j]))
+                            v.append(Rlin*delta_ *(I[j+1])+v[j])
+                        
+                            s+=Ptrain[indices_ss[j+1]][i]/v[j+1]
+                        
+                        
+                        return(float((Vk-V)/(Rlin*X[indices_ss[0]][i])+(Vk_1-V)/(Rlin*(d-X[max(indices_ss)][i]))-s))
+                
+            
+                    res= sc.optimize.minimize(minimize,800)
+                    v=float(res.x)
+                    
+                    Vk=V0*alpha+v/(Rlin*X[indices_ss[0]][i])*(1/(1/(Rlin*X[indices_ss[0]][i])+alpha))
+                    Vk_1=V0*beta+v/(Rlin*(d-X[max(indices_ss)][i]))*(1/(1/(Rlin*(d-X[max(indices_ss)][i]))+beta))
+                    I1=(Vk-v)/(Rlin*X[indices_ss[0]][i])
+                    I2=(Vk_1-v)/(Rlin*(d-X[max(indices_ss)][i]))
+                    I=[float(I1)]
+                    
+                
+                    V[indices_ss[0]].append(v)
+                    for j in range (len(indices_ss)-1):
+                        delta_=X[indices_ss[j+1]][i]-X[indices_ss[j]][i]
+
+                        I.append(I[j]-Ptrain[indices_ss[j]][i]/v)
+                        v = Rlin*delta_ *(I[j+1])+v
+                        V[indices_ss[j+1]].append(v)
+                        
+                else :
+                    a = int(a)
+                    V[a].append(V0)
+    return(V,tn)
+    
+V,tn=fn(T_attente) 
+print (V)
+plt.plot(V[0],tn)
+
+                
+                    
+    
+                
+
+                        
+                    
+                 
+    
+
+# +
+X = [[1028,29,72],[23,34,31],[23,12,321],[231,342,301]]
+print(X[1][2])
+ss = [X[k][2]//1 for k in range (4)]
+
+print(ss)
 # -
-
-print (y.index(min (y[1:])))
 
 
